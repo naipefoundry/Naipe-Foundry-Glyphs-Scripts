@@ -1,4 +1,8 @@
 #MenuTitle: New Tabs With Diacritics
+# -*- coding: utf-8 -*-
+__doc__="""
+Opens new tabs with all the accented characters for each diacritic in the font
+"""
 
 ##################################################
 ### This part finds one letter containing each ###
