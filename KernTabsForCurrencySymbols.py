@@ -30,4 +30,3 @@ for currency_glyph in currency_glyphs:
 for key, value in CurrencyTabs.items():
     tab = font.newTab()
     tab.text = value
-    tab.name = key
