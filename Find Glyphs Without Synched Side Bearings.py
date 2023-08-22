@@ -21,6 +21,10 @@ if font is not None:
             layer = glyph.layers[master.id]
             left_side_bearing = layer.LSB
             right_side_bearing = layer.RSB
+
+            # Check if glyph has at least one contour
+#            if len(layer.paths) == 0:
+#                continue
             
             # Check if LSB and RSB values are not the same in the current master
             if (left_side_bearing != layer.parent.layers[font.selectedFontMaster.id].LSB) or (right_side_bearing != layer.parent.layers[font.selectedFontMaster.id].RSB):
