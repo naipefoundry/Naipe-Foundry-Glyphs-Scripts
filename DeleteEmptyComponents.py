@@ -1,7 +1,7 @@
 #MenuTitle: Delete empty components
 # -*- coding: utf-8 -*-
 __doc__="""
-Look through all layers of all glyphs, finds and deletes any empty components
+Deletes empty components in all layers of all glyphs
 """
 
 

@@ -1,7 +1,7 @@
 #MenuTitle: Delete empty components in selected glyphs
 # -*- coding: utf-8 -*-
 __doc__="""
-Look through selected glyphs, finds and deletes any empty components
+Finds and deletes all empty components in all layers of selected glyphs.
 """
 
 def findAndDeleteEmptyComponentsInSelectedGlyphs():
