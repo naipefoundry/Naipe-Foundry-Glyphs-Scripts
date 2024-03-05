@@ -24,6 +24,7 @@ def find_and_delete_color_layers():
 
     # Iterate over each selected glyph layer
     for glyph_layer in selected_glyphs:
+        glyph = glyph_layer.parent
 
         # Check if Color layers exist
         has_color_layers = any(layer.name.startswith("Color") for layer in glyph.layers)
