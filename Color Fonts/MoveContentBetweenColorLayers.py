@@ -1,5 +1,9 @@
-from GlyphsApp import *
-from vanilla import *
+#MenuTitle: Move content between color layers
+# -*- coding: utf-8 -*-
+__doc__="""
+Moves contours between one or more color font layers, with options to remove overlap and preserve target layer contents
+"""
+
 
 class SimpleWindow(object):
     def __init__(self):
