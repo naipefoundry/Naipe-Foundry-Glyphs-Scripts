@@ -16,9 +16,9 @@ Numbers = "0174253698"
 
 # Define control characters
 control_characters = {
-    "UC_LTN": ("HO", "OH"),
+    "UC_LTN": ("OH", "HO"),
     "lc_LTN": ("on", "no"),
-    "UC_CYR": ("НО", "ОН"),
+    "UC_CYR": ("ОН", "НО"),
     "lc_CYR": ("он", "но"),
     "Numbers": ("00", "00"),
 }
@@ -153,7 +153,7 @@ class KerningUI:
                     if "UC" in primary_group_name and "lc" in secondary_group:  # Upper case vs lower case (script-agnostic)
                         line = " ".join(f"{left_ctrl}{char1}{right_ctrl}{char2}{control_characters.get(secondary_group, ('', ''))[1]}" for char2 in secondary_chars)
                     else:
-                        line = " ".join(f"{left_ctrl}{char1}{char2}{right_ctrl}" for char2 in secondary_chars)
+                        line = " ".join(f"{left_ctrl}{char1}{char2}{char1}{right_ctrl}" for char2 in secondary_chars)
                 lines.append(line)
             
             # Create new tab with DOUBLE line breaks
