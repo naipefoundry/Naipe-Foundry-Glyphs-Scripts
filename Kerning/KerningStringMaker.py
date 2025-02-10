@@ -9,8 +9,8 @@ import vanilla
 
 # Define character groups
 UC_LTN = "HILEFTKMNUJŊOQCGŒØDBPRÞAÆVWYXZSẞ"
-lc_LTN = "nmuriıjȷłhkoøœecðbpþqdaæstfvywxzgß"
-UC_CYR = "НИПЏШЫМІЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ"
+lc_LTN = "nmuriıjȷŋhlłkoøœecðbpþqdgaætfvywxzsß"
+UC_CYR = "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ"
 lc_CYR = "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ"
 Numbers = "0174253698"
 
@@ -26,7 +26,7 @@ control_characters = {
 # Define punctuation patterns
 punctuation_patterns = [
     ".", ",", ":", ";", "-", "_", "//", "\\", "¡!", "¿?", "()", "[]", "{}", 
-    "‘’", "‚‘", "’", "‹›", "›‹", "*", "&", "@", "©", "¶", "§", "№", "€", "£", "¥", "%", "‰", 
+    "‘’", "‚‘", "’", "‹›", "›‹", "*", "#", "&", "@", "©", "¶", "§", "№", "€", "£", "¥", "%", "‰", 
     "™", "ª", "º", "↑", "↗", "→", "☚", "☛", "❦"
 ]
 
@@ -151,7 +151,7 @@ class KerningUI:
                         line = char1 + "".join(f"{char}{char1}" for char in secondary_chars)
                 else:
                     if "UC" in primary_group_name and "lc" in secondary_group:  # Upper case vs lower case (script-agnostic)
-                        line = " ".join(f"{left_ctrl}{char1}{right_ctrl}{char2}{control_characters.get(secondary_group, ('', ''))[1]}" for char2 in secondary_chars)
+                        line = " ".join(f"{left_ctrl}{char1}{char2}{control_characters.get(secondary_group, ('', ''))[1]}" for char2 in secondary_chars)
                     else:
                         line = " ".join(f"{left_ctrl}{char1}{char2}{char1}{right_ctrl}" for char2 in secondary_chars)
                 lines.append(line)
