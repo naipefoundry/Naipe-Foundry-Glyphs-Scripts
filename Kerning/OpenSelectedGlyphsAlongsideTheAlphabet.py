@@ -34,7 +34,9 @@ for layer in selected_glyphs:
     SelectedGlyphs[glyph.name] = unicode_string
 
 def add_glyph_before_alphabet(selected_glyphs):
-    alphabet = 'abcdefghhijkllmnopqrstuvwxyzßæðøþœ'
+    alphabet = 'abcdefghhijkllmnopqrstuvwxyz'
+#    alphabet = 'abcdefghhijkllmnopqrstuvwxyzßæðøþœ'
+#    alphabet = 'nmuriıjȷlhkoecbpqdastfvywxzg'
     result = ''
     count = 0
     for glyph_name in selected_glyphs:
