@@ -1,4 +1,4 @@
-#Menu Title: Duplicate Master Layers with Name
+# MenuTitle: Duplicate Master Layers with Name
 # -*- coding: utf-8 -*-
 __doc__ = """
 Opens a UI to duplicate each master layer with a user-defined name prefix.
