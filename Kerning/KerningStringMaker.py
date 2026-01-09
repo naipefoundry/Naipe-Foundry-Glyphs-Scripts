@@ -8,8 +8,8 @@ Creates kerning strings for Latin, Cyrillic, Numbers, or Punctuation and opens t
 import vanilla
 
 # Define character groups
-UC_LTN = "HILEFTKMNUJŊOQCGŒØDBPRÞAÆVWYXZSẞ"
-lc_LTN = "nmuriıjȷŋhlłkoøœecðbpþqdgaætfvywxzsß"
+UC_LTN = "HILEFTKMNUƯJŊOƠQCGŒØDBPRÞAÆVWYXZSẞ"
+lc_LTN = "nmuưriıjȷŋhlłkoơøœecðbpþqdďgaætfvywxzsß"
 UC_CYR = "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ"
 lc_CYR = "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ"
 Numbers = "0174253698"
@@ -26,7 +26,8 @@ control_characters = {
 # Define punctuation patterns
 punctuation_patterns = [
     ".", ",", ":", ";", "-", "_", "//", "\\", "¡!", "¿?", "()", "[]", "{}", 
-    "‘’", "‚‘", "’", "‹›", "›‹", "*", "#", "&", "@", "©", "¶", "§", "№", "€", "£", "¥", "%", "‰", 
+    "‘’", "‚‘", "’", "‹›", "›‹", "*", "#", "&", "@", "©", "®", "¶", "§", "№", 
+    "$", "€", "£", "¥", "₦", "₹", "₩", "฿", "₫", "¢", "₴", "₽", "%", "‰", "†", "‡",
     "™", "ª", "º", "↑", "↗", "→", "☚", "☛", "❦", "<>",'“”']
     
 
