@@ -1,374 +1,220 @@
 #MenuTitle: Kerning String Maker
 # -*- coding: utf-8 -*-
 __doc__="""
-Creates kerning strings for Latin, Cyrillic, Numbers, or Punctuation and opens them in a new tab in Glyphs.
+Professional Kerning String Maker. Fixes Number-as-Primary crash and Punctuation vs Number labels.
 """
 
 import vanilla
+from GlyphsApp import Glyphs
 
 # -----------------------------
-# Configuration
+# 1. CONFIGURATION
 # -----------------------------
 
-# Base glyph names for numbers (in kerning order, not numerical)
 NUMBER_BASE_NAMES = ["zero", "one", "seven", "four", "two", "five", "three", "six", "nine", "eight"]
 
-# Number variant configuration (order matters - tabular last!)
 NUMBER_VARIANTS_CONFIG = [
-    {"suffix": None, "label": "Default Numbers", "order": 1},
-    {"suffix": "lf", "label": "Lining Figures", "order": 2},
-    {"suffix": "osf", "label": "Old Style Figures", "order": 3},
-    {"suffix": "dnom", "label": "Denominators", "order": 4},
-    {"suffix": "numr", "label": "Numerators", "order": 5},
-    {"suffix": "sinf", "label": "Inferiors", "order": 6},
-    {"suffix": "numr", "label": "Superiors", "order": 7},
-    {"suffix": "tf", "label": "Tabular Figures", "order": 8, "warning": "!!! Tabular figures ahead, do not kern !!!"},
-    {"suffix": "tosf", "label": "Tabular Old Style Figures", "order": 9},
+    {"suffix": None, "label": "Default Numbers"},
+    {"suffix": "lf", "label": "Lining Figures"},
+    {"suffix": "osf", "label": "Old Style Figures"},
+    {"suffix": "dnom", "label": "Denominators"},
+    {"suffix": "numr", "label": "Numerators"},
+    {"suffix": "sinf", "label": "Inferiors"},
+    {"suffix": "sups", "label": "Superiors"},
+    {"suffix": "tf", "label": "Tabular Figures"},
+    {"suffix": "tosf", "label": "Tabular Old Style Figures"},
 ]
 
-# Unified character group definitions
-CHARACTER_GROUPS = {
-    "UC_LTN": {
-        "chars": "HILEFTKMNUƯJŊOƠQCGŒØDƏBPRÞAÆVWYXZSẞ",
-        "control": ("OH", "HO"),
-        "label": "Latin Upper-Case"
-    },
-    "lc_LTN": {
-        "chars": "nmuưriıjȷŋhlłkoơøœeəcðbpþqdďđħgaætŧťfvywxzsß",
-        "control": ("on", "no"),
-        "label": "Latin Lower-Case"
-    },
-    "UC_CYR": {
-        "chars": "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ",
-        "control": ("ОН", "НО"),
-        "label": "Cyrillic Upper-Case"
-    },
-    "lc_CYR": {
-        "chars": "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ",
-        "control": ("он", "но"),
-        "label": "Cyrillic Lower-Case"
-    },
-    "punctuation_patterns": {
-        "chars": [
-            ".", ",", ":", ";", "-", "_", "//", "\\", "¡!", "¿?", "()", "[]", "{}",
-            "‘’", "‚‘", "’", "\"\"", "\'\'", "‹›", "›‹", "*", "#", "&", "@", "©", "®", "¶", "§", "№",
-            "$", "€", "£", "¥", "₦", "₹", "₩", "฿", "₫", "¢", "₴", "₽", "%", "‰", "†", "‡",
-            "™", "ª", "º", "®", "↑", "↓", "↖", "↙", "←", "→", "↘", "↗", "☚", "☛", "❦", "<>"
-        ],
-        "control": ("", ""),
-        "label": "Punctuation and Symbols"
+UI_GROUPS = [
+    {"label": "Upper case", "key": "UC"},
+    {"label": "Lower case", "key": "lc"},
+    {"label": "Numbers", "key": "numbers"},
+    {"label": "Punctuation and Symbols", "key": "punctuation"}
+]
+
+DATA = {
+    "UC_LTN": {"chars": "HILEFTKMNUƯJŊOƠQCGŒØDƏBPRÞAÆVWYXZSẞ", "l_ctrl": "OH", "r_ctrl": "HO"},
+    "lc_LTN": {"chars": "nmuưriıjȷŋhlłkoơøœeəcðbpþqdďđħgaætŧťfvywxzsß", "l_ctrl": "on", "r_ctrl": "no"},
+    "UC_CYR": {"chars": "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ", "l_ctrl": "ОН", "r_ctrl": "НО"},
+    "lc_CYR": {"chars": "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ", "l_ctrl": "он", "r_ctrl": "но"},
+    "punctuation": {
+        "chars": [".", ",", ":", ";", "-", "_", "/", "\\", "¡!", "¿?", "()", "[]", "{}", "‘’", "‚‘", "’", "\"\"", "\'\'", "‹›", "›‹", "*", "#", "&", "@", "©", "®", "¶", "§", "№", "$", "€", "£", "¥", "₦", "₹", "₩", "฿", "₫", "¢", "₴", "₽", "%", "‰", "†", "‡", "™", "ª", "º", "®", "↑", "↓", "↖", "↙", "←", "→", "↘", "↗", "☚", "☛", "❦", "<>"],
+        "l_ctrl": "OH", "r_ctrl": "HO" 
     }
 }
 
-# -----------------------------
-# Helper Functions
-# -----------------------------
-
-def filter_existing_chars(font, char_string):
-    """Filter character string to only include glyphs present in font."""
-    return "".join(c for c in char_string if font.glyphs[c] is not None)
-
-def detect_number_variants(font):
-    """
-    Detect which number variants exist in the font.
-    Returns a list of dicts with variant info, sorted by order.
-    """
-    variants = []
-    
-    for config in NUMBER_VARIANTS_CONFIG:
-        suffix = config["suffix"]
-        variant_nums = []
-        missing_nums = []
-        
-        for name in NUMBER_BASE_NAMES:
-            glyph_name = name if suffix is None else f"{name}.{suffix}"
-            if font.glyphs[glyph_name]:
-                variant_nums.append(f"/{glyph_name} ")
-            else:
-                missing_nums.append(name)
-        
-        if variant_nums:
-            variant_data = {
-                "suffix": suffix,
-                "label": config["label"],
-                "glyphs": variant_nums,
-                "order": config["order"],
-                "warning": config.get("warning")
-            }
-            variants.append(variant_data)
-            
-            if missing_nums:
-                print(f"{config['label']}: Missing {', '.join(missing_nums)}")
-    
-    # Sort by order
-    variants.sort(key=lambda x: x["order"])
-    return variants
-
-def get_control_chars_for_numbers(variant_suffix):
-    """Get appropriate control characters for a number variant."""
-    if variant_suffix is None:
-        return ("/zero ", "/zero ")
-    else:
-        return (f"/zero.{variant_suffix} ", f"/zero.{variant_suffix} ")
-
-# -----------------------------
-# Initialize font data
-# -----------------------------
-
-font = Glyphs.font
-
-if font:
-    # Filter character groups to only existing glyphs
-    for group_key in ["UC_LTN", "lc_LTN", "UC_CYR", "lc_CYR"]:
-        original = CHARACTER_GROUPS[group_key]["chars"]
-        CHARACTER_GROUPS[group_key]["chars"] = filter_existing_chars(font, original)
-    
-    # Detect number variants
-    NUMBER_VARIANTS = detect_number_variants(font)
-    
-    print("--- AVAILABLE NUMBER VARIANTS ---")
-    for variant in NUMBER_VARIANTS:
-        print(f"{variant['label']}: {len(variant['glyphs'])} glyphs")
-
-# -----------------------------
-# UI
-# -----------------------------
-
 class KerningUI:
     def __init__(self):
-        self.w = vanilla.FloatingWindow((300, 480), "Kerning String Maker")
+        self.ui_width = 320
+        self.current_height = 20
+        self.w = vanilla.FloatingWindow((self.ui_width, 100), "Kerning String Maker")
         
-        y = 10
-        
-        # Script selection
-        self.w.text0 = vanilla.TextBox((10, y, -10, 20), "Writing system:")
-        y += 25
-        self.w.scriptRadio = vanilla.RadioGroup((10, y, -10, 40), ["Latin", "Cyrillic"], isVertical=False)
+        self.w.labelScript = vanilla.TextBox((20, self.current_height, -20, 20), "Writing System")
+        self.current_height += 24
+        self.w.scriptRadio = vanilla.RadioGroup((20, self.current_height, -20, 20), ["Latin", "Cyrillic"], isVertical=False)
         self.w.scriptRadio.set(0)
-        y += 45
+        self.current_height += 45
         
-        # Character order
-        self.w.text_order = vanilla.TextBox((10, y, -10, 20), "Character order:")
-        y += 25
-        self.w.orderRadio = vanilla.RadioGroup((10, y, -10, 20), ["By Shape", "Alphabetical"], isVertical=False)
+        self.w.labelOrder = vanilla.TextBox((20, self.current_height, -20, 20), "Character Order")
+        self.current_height += 24
+        self.w.orderRadio = vanilla.RadioGroup((20, self.current_height, -20, 20), ["By Shape", "Alphabetical"], isVertical=False)
         self.w.orderRadio.set(0)
-        y += 30
+        self.current_height += 45
+
+        self.w.labelPrimary = vanilla.TextBox((20, self.current_height, -20, 20), "Kern This")
+        self.current_height += 24
+        self.w.primaryDropdown = vanilla.PopUpButton((20, self.current_height, -20, 20), [g["label"] for g in UI_GROUPS])
+        self.current_height += 45
+
+        self.w.labelSecondary = vanilla.TextBox((20, self.current_height, -20, 20), "Against This")
+        self.current_height += 24
         
-        # Primary group
-        self.w.text1 = vanilla.TextBox((10, y, -10, 20), "Kern this:")
-        y += 25
-        self.w.primaryDropdown = vanilla.PopUpButton(
-            (10, y, -10, 20),
-            ["Upper case", "Lower case", "Numbers", "Punctuation and Symbols"]
-        )
-        y += 35
+        self.checkboxes = {}
+        for group in UI_GROUPS:
+            attr = f"cb_{group['key']}"
+            setattr(self.w, attr, vanilla.CheckBox((25, self.current_height, -20, 20), group["label"], value=True))
+            self.checkboxes[group['key']] = getattr(self.w, attr)
+            self.current_height += 24
+            
+        self.current_height += 20
+        self.w.button = vanilla.Button((50, self.current_height, -50, 28), "Generate Kerning Tabs", callback=self.generate)
+        self.current_height += 45
         
-        # Secondary group checkboxes
-        self.w.text2 = vanilla.TextBox((10, y, -10, 20), "Against this:")
-        y += 25
-        self.w.secondaryCheckboxes = vanilla.Group((10, y, -10, 100))
-        self.w.secondaryCheckboxes.cb_upper = vanilla.CheckBox((10, 0, -10, 20), "Upper case", value=True)
-        self.w.secondaryCheckboxes.cb_lower = vanilla.CheckBox((10, 25, -10, 20), "Lower case", value=True)
-        self.w.secondaryCheckboxes.cb_numbers = vanilla.CheckBox((10, 50, -10, 20), "Numbers", value=True)
-        y += 105
-        
-        # Generate button
-        self.w.button = vanilla.Button((60, y, 200, 20), "New tabs with Kerning Strings", callback=self.generateKerningStrings)
-        y += 30
-        
-        self.w.resize(300, y)
+        self.w.resize(self.ui_width, self.current_height)
         self.w.open()
 
-    def generateKerningStrings(self, sender):
-        font = Glyphs.font
-        if not font:
-            Message("No font open in Glyphs.", title="Error")
-            return
-        
-        # Get user selections
-        selected_script = self.w.scriptRadio.get()
-        process_latin = selected_script == 0
-        process_cyrillic = selected_script == 1
-        alphabetical_order = self.w.orderRadio.get() == 1
-        
-        primary_index = self.w.primaryDropdown.get()
-        primary_label = ["Upper case", "Lower case", "Numbers", "Punctuation and Symbols"][primary_index]
-        
-        # Determine primary group
-        if primary_label == "Lower case":
-            primary_group = "lc_LTN" if process_latin else "lc_CYR"
-        elif primary_label == "Upper case":
-            primary_group = "UC_LTN" if process_latin else "UC_CYR"
-        elif primary_label == "Punctuation and Symbols":
-            primary_group = "punctuation_patterns"
-        else:
-            primary_group = "Numbers"
-        
-        # Determine secondary groups
-        secondary_groups = []
-        if self.w.secondaryCheckboxes.cb_lower.get():
-            secondary_groups.append("lc_LTN" if process_latin else "lc_CYR")
-        if self.w.secondaryCheckboxes.cb_upper.get():
-            secondary_groups.append("UC_LTN" if process_latin else "UC_CYR")
-        if self.w.secondaryCheckboxes.cb_numbers.get():
-            secondary_groups.append("Numbers")
-        
-        # Avoid mixing Latin and Cyrillic
-        if process_latin:
-            secondary_groups = [g for g in secondary_groups if "CYR" not in g]
-        if process_cyrillic:
-            secondary_groups = [g for g in secondary_groups if "LTN" not in g]
-        
-        # Generate strings
-        if primary_group == "Numbers":
-            self._generate_numbers_primary(secondary_groups, alphabetical_order)
-        else:
-            self._generate_standard_primary(primary_group, primary_label, secondary_groups, alphabetical_order)
-    
-    def _generate_standard_primary(self, primary_group, primary_label, secondary_groups, alphabetical_order):
-        """Generate kerning strings when Numbers is NOT the primary group."""
-        font = Glyphs.font
-        
-        # Get primary characters
-        if primary_group == "punctuation_patterns":
-            primary_chars = CHARACTER_GROUPS[primary_group]["chars"]
-        else:
-            primary_data = CHARACTER_GROUPS[primary_group]["chars"]
-            if not primary_data:
-                Message(f"{CHARACTER_GROUPS[primary_group]['label']} is empty.", title="Empty Group")
-                return
-            primary_chars = sorted(primary_data) if alphabetical_order else primary_data
-        
-        for secondary_group in secondary_groups:
-            if secondary_group == "Numbers":
-                # Generate single tab with all number variants
-                self._generate_tab_primary_vs_all_numbers(
-                    primary_group, primary_label, primary_chars, alphabetical_order
-                )
-            else:
-                # Standard unicode-based group
-                secondary_data = CHARACTER_GROUPS[secondary_group]["chars"]
-                if not secondary_data:
-                    continue
-                
-                secondary_chars = sorted(secondary_data) if alphabetical_order else secondary_data
-                self._generate_standard_tab(
-                    primary_group, primary_label, primary_chars,
-                    secondary_group, secondary_chars
-                )
-    
-    def _generate_tab_primary_vs_all_numbers(self, primary_group, primary_label, primary_chars, alphabetical_order):
-        """Generate a single tab with all number variants separated by labels."""
-        all_sections = []
-        
-        for variant in NUMBER_VARIANTS:
-            # Add warning label if this is tabular
-            if variant.get("warning"):
-                all_sections.append(f"\n\n{variant['warning']}\n")
-            
-            # Add variant label
-            all_sections.append(f"--- {variant['label']} vs {primary_label} ---\n")
-            
-            left_ctrl, right_ctrl = CHARACTER_GROUPS[primary_group]["control"]
-            
-            for char1 in primary_chars:
-                if primary_group == "punctuation_patterns":
-                    if len(char1) == 2:
-                        line = char1[0] + "".join(f"{num}{char1[1]}{char1[0]}" for num in variant['glyphs'][:-1]) + f"{variant['glyphs'][-1]}{char1[1]}"
-                    else:
-                        line = char1 + "".join(f"{num}{char1}" for num in variant['glyphs'])
-                else:
-                    line = " ".join(f"{left_ctrl}{char1}{num}{char1}{right_ctrl}" for num in variant['glyphs'])
-                all_sections.append(line)
-        
-        Glyphs.font.newTab("\n\n".join(all_sections))
-    
-    def _generate_standard_tab(self, primary_group, primary_label, primary_chars, secondary_group, secondary_chars):
-        """Generate a standard tab for non-number groups."""
-        lines = [f"--- {primary_label} vs {CHARACTER_GROUPS[secondary_group]['label']} ---\n"]
-        
-        left_ctrl, right_ctrl = CHARACTER_GROUPS[primary_group]["control"]
-        
-        for char1 in primary_chars:
-            if primary_group == "punctuation_patterns":
-                if len(char1) == 2:
-                    line = char1[0] + "".join(f"{char2}{char1[1]}{char1[0]}" for char2 in secondary_chars[:-1]) + f"{secondary_chars[-1]}{char1[1]}"
-                else:
-                    line = char1 + "".join(f"{char2}{char1}" for char2 in secondary_chars)
-            else:
-                if "UC" in primary_group and "lc" in secondary_group:
-                    sec_ctrl = CHARACTER_GROUPS[secondary_group]["control"]
-                    line = " ".join(f"{left_ctrl}{char1}{char2}{sec_ctrl[1]}" for char2 in secondary_chars)
-                else:
-                    line = " ".join(f"{left_ctrl}{char1}{char2}{char1}{right_ctrl}" for char2 in secondary_chars)
-            lines.append(line)
-        
-        Glyphs.font.newTab("\n\n".join(lines))
-    
-    def _generate_numbers_primary(self, secondary_groups, alphabetical_order):
-        """Generate kerning strings when Numbers IS the primary group."""
-        font = Glyphs.font
-        
-        if not NUMBER_VARIANTS:
-            Message("No number glyphs found in font.", title="Empty Group")
-            return
-        
-        for secondary_group in secondary_groups:
-            if secondary_group == "Numbers":
-                # Numbers vs Numbers: single tab with all variants
-                self._generate_numbers_vs_numbers_tab()
-            else:
-                # Numbers vs other groups: single tab with all variants
-                secondary_data = CHARACTER_GROUPS[secondary_group]["chars"]
-                if not secondary_data:
-                    continue
-                
-                secondary_chars = sorted(secondary_data) if alphabetical_order else secondary_data
-                self._generate_numbers_vs_group_tab(secondary_group, secondary_chars)
-    
-    def _generate_numbers_vs_numbers_tab(self):
-        """Generate single tab with all Numbers vs Numbers variants."""
-        all_sections = []
-        
-        for variant in NUMBER_VARIANTS:
-            # Add warning label if this is tabular
-            if variant.get("warning"):
-                all_sections.append(f"\n\n{variant['warning']}\n")
-            
-            # Add variant label
-            all_sections.append(f"--- {variant['label']} vs {variant['label']} ---\n")
-            
-            left_ctrl, right_ctrl = get_control_chars_for_numbers(variant['suffix'])
-            
-            for num1 in variant['glyphs']:
-                line = " ".join(f"{left_ctrl}{num1}{num2}{num1}{right_ctrl}" for num2 in variant['glyphs'])
-                all_sections.append(line)
-        
-        Glyphs.font.newTab("\n\n".join(all_sections))
-    
-    def _generate_numbers_vs_group_tab(self, secondary_group, secondary_chars):
-        """Generate single tab with all number variants vs a group."""
-        all_sections = []
-        secondary_label = CHARACTER_GROUPS[secondary_group]["label"]
-        
-        for variant in NUMBER_VARIANTS:
-            # Add warning label if this is tabular
-            if variant.get("warning"):
-                all_sections.append(f"\n\n{variant['warning']}\n")
-            
-            # Add variant label
-            all_sections.append(f"--- {variant['label']} vs {secondary_label} ---\n")
-            
-            left_ctrl, right_ctrl = get_control_chars_for_numbers(variant['suffix'])
-            
-            for num in variant['glyphs']:
-                line = " ".join(f"{left_ctrl}{num}{char}{num}{right_ctrl}" for char in secondary_chars)
-                all_sections.append(line)
-        
-        Glyphs.font.newTab("\n\n".join(all_sections))
+    def _get_flattened_and_wrappers(self, group_chars):
+        flat, wrappers = [], []
+        for item in group_chars:
+            for c in item: flat.append(c)
+            w_left = item[0]
+            w_right = item[1] if len(item) > 1 else item[0]
+            wrappers.append((w_left, w_right))
+        return flat, wrappers
 
-# Launch the UI
-if font:
+    def _format_glyph_name(self, name):
+        name = name.strip().lstrip("/")
+        return f"/{name} "
+
+    def _handle_slash_punc(self, punc, is_left=True):
+        if punc == "/": return "//"
+        return punc
+
+    def get_data_key(self, ui_key):
+        if ui_key in ["numbers", "punctuation"]: return ui_key
+        script = "LTN" if self.w.scriptRadio.get() == 0 else "CYR"
+        return f"{ui_key}_{script}"
+
+    def get_filtered_chars(self, font, data_key):
+        if data_key == "numbers": return []
+        raw = DATA[data_key]["chars"]
+        valid = [item for item in raw if all(font.glyphForCharacter_(ord(c)) or font.glyphs[c] for c in item)]
+        if self.w.orderRadio.get() == 1 and data_key != "punctuation":
+            valid.sort()
+        return valid
+
+    def generate(self, sender):
+        font = Glyphs.font
+        if not font: return
+        p_ui_key = UI_GROUPS[self.w.primaryDropdown.get()]["key"]
+        p_data_key = self.get_data_key(p_ui_key)
+        selected_sec_keys = [self.get_data_key(k) for k, cb in self.checkboxes.items() if cb.get()]
+        
+        for sec_key in selected_sec_keys:
+            if "numbers" in [p_data_key, sec_key]:
+                self.generate_number_tab(font, p_data_key, sec_key)
+            else:
+                self.generate_standard_tab(font, p_data_key, sec_key)
+
+    def generate_standard_tab(self, font, p_key, s_key):
+        p_chars = self.get_filtered_chars(font, p_key)
+        s_chars = self.get_filtered_chars(font, s_key)
+        is_p_punc = "punctuation" in p_key
+        p_label = next(g["label"] for g in UI_GROUPS if g["key"] in p_key or p_key == g["key"])
+        s_label = next(g["label"] for g in UI_GROUPS if g["key"] in s_key or s_key == g["key"])
+        lines = [f"--- {p_label} vs {s_label} ---"]
+
+        l_ctrl, r_ctrl = ("", "") if is_p_punc else (DATA[p_key]["l_ctrl"], DATA[p_key]["r_ctrl"])
+        if "UC" in p_key and "lc" in s_key: r_ctrl = DATA[s_key]["r_ctrl"]
+
+        if is_p_punc or "punctuation" in s_key:
+            wrapper_src = p_chars if is_p_punc else s_chars
+            target_src = s_chars if is_p_punc else p_chars
+            _, wrappers = self._get_flattened_and_wrappers(wrapper_src)
+            flat_targets, _ = self._get_flattened_and_wrappers(target_src)
+            for w_l, w_r in wrappers:
+                wl_f, wr_f = self._handle_slash_punc(w_l), self._handle_slash_punc(w_r)
+                line = " ".join(f"{l_ctrl}{wl_f}{t}{wr_f}{r_ctrl}" for t in flat_targets)
+                lines.append(line)
+        else:
+            for p in p_chars:
+                line = " ".join(f"{l_ctrl}{p}{s}{r_ctrl if 'lc' in s_key and 'UC' in p_key else p+r_ctrl}" for s in s_chars)
+                lines.append(line)
+        font.newTab("\n\n".join(lines))
+
+    def generate_number_tab(self, font, p_key, s_key):
+        variants = []
+        for cfg in NUMBER_VARIANTS_CONFIG:
+            suffix = cfg["suffix"]
+            glyphs = [f"{n}{'.'+suffix if suffix else ''}" for n in NUMBER_BASE_NAMES if font.glyphs[f"{n}{'.'+suffix if suffix else ''}"]]
+            if glyphs: variants.append({"label": cfg["label"], "glyphs": glyphs, "suffix": suffix})
+
+        is_p_num = p_key == "numbers"
+        is_p_punc = p_key == "punctuation"
+        
+        # Resolve clean labels for the secondary group
+        if is_p_num or is_p_punc:
+            sec_ui_key = s_key.split('_')[0]
+            sec_label = next((g["label"] for g in UI_GROUPS if g["key"] == sec_ui_key), "Others")
+        else:
+            sec_label = "Numbers"
+
+        all_lines = []
+        for var in variants:
+            # Fix Labeling
+            p_title = var["label"] if is_p_num else ("Punctuation" if is_p_punc else "Letters")
+            s_title = var["label"] if not is_p_num and not is_p_punc else sec_label
+            all_lines.append(f"--- {p_title} vs {s_title} ---")
+            
+            z_fmt = self._format_glyph_name(f"zero{'.'+var['suffix'] if var['suffix'] else ''}")
+            l_ctrl, r_ctrl = ("", "") if is_p_punc else (f"{z_fmt}{z_fmt}", f"{z_fmt}{z_fmt}")
+            if not is_p_num and not is_p_punc:
+                l_ctrl, r_ctrl = DATA[p_key]["l_ctrl"], DATA[p_key]["r_ctrl"]
+
+            if "punctuation" in [p_key, s_key]:
+                punc_data = self.get_filtered_chars(font, "punctuation")
+                _, wrappers = self._get_flattened_and_wrappers(punc_data)
+                if is_p_punc: 
+                    for w_l, w_r in wrappers:
+                        wl_f, wr_f = self._handle_slash_punc(w_l), self._handle_slash_punc(w_r)
+                        line = " ".join(f"{wl_f}{self._format_glyph_name(n)}{wr_f}" for n in var["glyphs"])
+                        all_lines.append(line)
+                else: 
+                    for n in var["glyphs"]:
+                        n_f = self._format_glyph_name(n)
+                        flat_punc, _ = self._get_flattened_and_wrappers(punc_data)
+                        line = " ".join(f"{l_ctrl}{n_f}{self._handle_slash_punc(p)}{n_f}{r_ctrl}" for p in flat_punc)
+                        all_lines.append(line)
+            
+            elif is_p_num and s_key == "numbers":
+                for n1 in var["glyphs"]:
+                    n1_f = self._format_glyph_name(n1)
+                    line = " ".join(f"{l_ctrl}{n1_f}{self._format_glyph_name(n2)}{n1_f}{r_ctrl}" for n2 in var["glyphs"])
+                    all_lines.append(line)
+
+            elif is_p_num: # Numbers Primary vs Letters
+                letter_chars = self.get_filtered_chars(font, s_key)
+                for n in var["glyphs"]:
+                    n_f = self._format_glyph_name(n)
+                    line = " ".join(f"{l_ctrl}{n_f}{l}{n_f}{r_ctrl}" for l in letter_chars)
+                    all_lines.append(line)
+            else: # Letters Primary vs Numbers
+                letter_chars = self.get_filtered_chars(font, p_key)
+                for l in letter_chars:
+                    line = " ".join(f"{l_ctrl}{l}{self._format_glyph_name(n)}{l}{r_ctrl}" for n in var["glyphs"])
+                    all_lines.append(line)
+
+        font.newTab("\n\n".join(all_lines))
+
+if Glyphs.font:
     KerningUI()
-else:
-    Message("Please open a font first.", title="No Font Open")
