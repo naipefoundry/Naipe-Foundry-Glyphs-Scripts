@@ -1,7 +1,7 @@
 #MenuTitle: Kerning String Maker
 # -*- coding: utf-8 -*-
 __doc__="""
-Professional Kerning String Maker. Fixes Number-as-Primary crash and Punctuation vs Number labels.
+Creates new tabs with kerning strings based on YOUR character set.
 """
 
 import vanilla
@@ -33,7 +33,7 @@ UI_GROUPS = [
 ]
 
 DATA = {
-    "UC_LTN": {"chars": "HILEFTKMNUƯJŊOƠQCGŒØDƏBPRÞAÆVWYXZSẞ", "l_ctrl": "OH", "r_ctrl": "HO"},
+    "UC_LTN": {"chars": "HILEFTKMNUƯJŊOƠQCGŒØDƏBPRÞAÆVWYXZSẞĦÐŁĽ", "l_ctrl": "OH", "r_ctrl": "HO"},
     "lc_LTN": {"chars": "nmuưriıjȷŋhlłkoơøœeəcðbpþqdďđħgaætŧťfvywxzsß", "l_ctrl": "on", "r_ctrl": "no"},
     "UC_CYR": {"chars": "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ", "l_ctrl": "ОН", "r_ctrl": "НО"},
     "lc_CYR": {"chars": "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ", "l_ctrl": "он", "r_ctrl": "но"},
