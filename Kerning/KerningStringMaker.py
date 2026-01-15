@@ -34,7 +34,7 @@ UI_GROUPS = [
 
 DATA = {
     "UC_LTN": {"chars": "HILEFTKMNUƯJŊOƠQCGŒØDƏBPRÞAÆVWYXZSẞĦÐŁĽ", "l_ctrl": "OH", "r_ctrl": "HO"},
-    "lc_LTN": {"chars": "nmuưriıjȷŋhlłkoơøœeəcðbpþqdďđħgaætŧťfvywxzsß", "l_ctrl": "on", "r_ctrl": "no"},
+    "lc_LTN": {"chars": "nmuưriıjȷŋhlłľkoơøœeəcðbþpqdďđħgaætŧťfvywxzsß", "l_ctrl": "on", "r_ctrl": "no"},
     "UC_CYR": {"chars": "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ", "l_ctrl": "ОН", "r_ctrl": "НО"},
     "lc_CYR": {"chars": "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ", "l_ctrl": "он", "r_ctrl": "но"},
     "punctuation": {
