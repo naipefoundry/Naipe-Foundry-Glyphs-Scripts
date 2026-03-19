@@ -37,50 +37,70 @@ DATA = {
     "lc_LTN": {"chars": "nmuưriıjȷŋhlłľkoơøœeəcðbþpqdďđħgaætŧťfvywxzsß", "l_ctrl": "on", "r_ctrl": "no"},
     "UC_CYR": {"chars": "НИПЏШЫІМЕЦЩДЈЮОФСЄЭЗВРЯГҐТЪЋЂБЬЊЛЉКЖХУЧАЅ", "l_ctrl": "ОН", "r_ctrl": "НО"},
     "lc_CYR": {"chars": "нипџшыміцщдјюобфрћђесєэзвягґтьъњлљкжхчуаѕ", "l_ctrl": "он", "r_ctrl": "но"},
+    "UC_GRK": {"chars": "ΗΠΙΓΕΤΚΜΝΞΒΡΨΟΘΩΦΑΔΛΥΧΖΣΉΊΈΌΆΏΎΎ", "l_ctrl": "ΟΗ", "r_ctrl": "ΗΟ"},
+    "lc_GRK": {"chars": "ηπιτκμοσρδαβφψωεςζξθυνγχλ", "l_ctrl": "οη", "r_ctrl": "ηο"},
     "punctuation": {
-        "chars": [".", ",", ":", ";", "-", "_", "/", "\\", "¡!", "¿?", "()", "[]", "{}", "‘’", "‚‘", "’", "\"\"", "\'\'", "‹›", "›‹", "*", "#", "&", "@", "©", "®", "¶", "§", "№", "$", "€", "£", "¥", "₦", "₹", "₩", "฿", "₫", "¢", "₴", "₽", "%", "‰", "†", "‡", "™", "ª", "º", "®", "↑", "↓", "↖", "↙", "←", "→", "↘", "↗", "☚", "☛", "❦", "<>"],
-        "l_ctrl": "OH", "r_ctrl": "HO" 
+        "chars": [".", ",", ":", ";", "-", "_", "/", "\\", "¡!", "¿?", "()", "[]", "{}", "''", "‚'", "'", "\"\"", "\'\'", "‹›", "›‹", "*", "#", "&", "@", "©", "®", "¶", "§", "№", "$", "€", "£", "¥", "₦", "₹", "₩", "฿", "₫", "¢", "₴", "₽", "%", "‰", "†", "‡", "™", "ª", "º", "®", "↑", "↓", "↖", "↙", "←", "→", "↘", "↗", "☚", "☛", "❦", "<>"],
+        "chars_GRK": ["·"],  # ano teleia, appended when Greek is selected
+        "l_ctrl": "OH", "r_ctrl": "HO"
     }
 }
 
 class KerningUI:
     def __init__(self):
         self.ui_width = 320
-        self.current_height = 20
-        self.w = vanilla.FloatingWindow((self.ui_width, 100), "Kerning String Maker")
-        
-        self.w.labelScript = vanilla.TextBox((20, self.current_height, -20, 20), "Writing System")
-        self.current_height += 24
-        self.w.scriptRadio = vanilla.RadioGroup((20, self.current_height, -20, 20), ["Latin", "Cyrillic"], isVertical=False)
+        y = 20  # running y cursor
+
+        # --- Calculate total height up front ---
+        # label + radio: 20+4+20+21 = 65 each for Script and Order
+        # label + dropdown + gap: 20+4+20+21 = 65 for Kern This
+        # label + checkboxes + gap: 20+4 + (len(UI_GROUPS)*24) + 20
+        # button row: 28+17
+        total_height = (
+            20 + 24 +   # Script label + radio
+            45 +        # gap after radio
+            20 + 24 +   # Order label + radio
+            45 +        # gap after radio
+            20 + 24 +   # Kern This label + dropdown
+            45 +        # gap after dropdown
+            20 + 24 +   # Against This label
+            len(UI_GROUPS) * 24 +  # one checkbox per group
+            20 +        # gap before button
+            28 + 17     # button + bottom padding
+        )
+
+        self.w = vanilla.FloatingWindow((self.ui_width, total_height), "Kerning String Maker")
+
+        self.w.labelScript = vanilla.TextBox((20, y, -20, 20), "Writing System")
+        y += 24
+        self.w.scriptRadio = vanilla.RadioGroup((20, y, -20, 20), ["Latin", "Cyrillic", "Greek"], isVertical=False)
         self.w.scriptRadio.set(0)
-        self.current_height += 45
-        
-        self.w.labelOrder = vanilla.TextBox((20, self.current_height, -20, 20), "Character Order")
-        self.current_height += 24
-        self.w.orderRadio = vanilla.RadioGroup((20, self.current_height, -20, 20), ["By Shape", "Alphabetical"], isVertical=False)
+        y += 45
+
+        self.w.labelOrder = vanilla.TextBox((20, y, -20, 20), "Character Order")
+        y += 24
+        self.w.orderRadio = vanilla.RadioGroup((20, y, -20, 20), ["By Shape", "Alphabetical"], isVertical=False)
         self.w.orderRadio.set(0)
-        self.current_height += 45
+        y += 45
 
-        self.w.labelPrimary = vanilla.TextBox((20, self.current_height, -20, 20), "Kern This")
-        self.current_height += 24
-        self.w.primaryDropdown = vanilla.PopUpButton((20, self.current_height, -20, 20), [g["label"] for g in UI_GROUPS])
-        self.current_height += 45
+        self.w.labelPrimary = vanilla.TextBox((20, y, -20, 20), "Kern This")
+        y += 24
+        self.w.primaryDropdown = vanilla.PopUpButton((20, y, -20, 20), [g["label"] for g in UI_GROUPS])
+        y += 45
 
-        self.w.labelSecondary = vanilla.TextBox((20, self.current_height, -20, 20), "Against This")
-        self.current_height += 24
-        
+        self.w.labelSecondary = vanilla.TextBox((20, y, -20, 20), "Against This")
+        y += 24
+
         self.checkboxes = {}
         for group in UI_GROUPS:
             attr = f"cb_{group['key']}"
-            setattr(self.w, attr, vanilla.CheckBox((25, self.current_height, -20, 20), group["label"], value=True))
+            setattr(self.w, attr, vanilla.CheckBox((25, y, -20, 20), group["label"], value=True))
             self.checkboxes[group['key']] = getattr(self.w, attr)
-            self.current_height += 24
-            
-        self.current_height += 20
-        self.w.button = vanilla.Button((50, self.current_height, -50, 28), "Generate Kerning Tabs", callback=self.generate)
-        self.current_height += 45
-        
-        self.w.resize(self.ui_width, self.current_height)
+            y += 24
+
+        y += 20
+        self.w.button = vanilla.Button((50, y, -50, 28), "Generate Kerning Tabs", callback=self.generate)
+
         self.w.open()
 
     def _get_flattened_and_wrappers(self, group_chars):
@@ -96,18 +116,20 @@ class KerningUI:
         name = name.strip().lstrip("/")
         return f"/{name} "
 
-    def _handle_slash_punc(self, punc, is_left=True):
-        if punc == "/": return "//"
+    def _handle_slash_punc(self, punc):
+        if punc == "/": return "/slash "
         return punc
 
     def get_data_key(self, ui_key):
         if ui_key in ["numbers", "punctuation"]: return ui_key
-        script = "LTN" if self.w.scriptRadio.get() == 0 else "CYR"
+        script = ["LTN", "CYR", "GRK"][self.w.scriptRadio.get()]
         return f"{ui_key}_{script}"
 
     def get_filtered_chars(self, font, data_key):
         if data_key == "numbers": return []
-        raw = DATA[data_key]["chars"]
+        raw = list(DATA[data_key]["chars"])
+        if data_key == "punctuation" and self.w.scriptRadio.get() == 2:
+            raw = DATA["punctuation"].get("chars_GRK", []) + raw
         valid = [item for item in raw if all(font.glyphForCharacter_(ord(c)) or font.glyphs[c] for c in item)]
         if self.w.orderRadio.get() == 1 and data_key != "punctuation":
             valid.sort()
@@ -144,7 +166,7 @@ class KerningUI:
             flat_targets, _ = self._get_flattened_and_wrappers(target_src)
             for w_l, w_r in wrappers:
                 wl_f, wr_f = self._handle_slash_punc(w_l), self._handle_slash_punc(w_r)
-                line = " ".join(f"{l_ctrl}{wl_f}{t}{wr_f}{r_ctrl}" for t in flat_targets)
+                line = " ".join(f"{l_ctrl}{wl_f}{self._handle_slash_punc(t)}{wr_f}{r_ctrl}" for t in flat_targets)
                 lines.append(line)
         else:
             for p in p_chars:
