@@ -1,7 +1,7 @@
-#MenuTitle: Non-unicode Kerning String Maker
+#MenuTitle: Arbitrary Kerning String Maker
 # -*- coding: utf-8 -*-
 __doc__="""
-Creates new tabs with kerning strings for your non-unicode glyphs.
+Creates kerning strings for arbitrary glyphs, including non-unicode ones.
 """
 
 import vanilla
@@ -64,7 +64,7 @@ class VariantKerningUI:
             28 + 17                 # button + bottom padding
         )
 
-        self.w = vanilla.FloatingWindow((self.ui_width, total_height), "Non-unicode Kerning String Maker")
+        self.w = vanilla.FloatingWindow((self.ui_width, total_height), "Arbitrary Kerning String Maker")
 
         self.w.labelScript = vanilla.TextBox((20, y, -20, 20), "Writing System")
         y += 24
@@ -151,7 +151,7 @@ class VariantKerningUI:
             else:
                 self.generate_standard_tab(font, variant_glyphs, sec_key)
 
-    def generate_standard_tab(self, font, variant_glyphs, s_key):
+    def generate_standard_tab(self, font, variant_glyphs, s_key, chunk_size=10):
         is_s_punc = s_key == "punctuation"
         s_label = next(g["label"] for g in UI_GROUPS if g["key"] in s_key or s_key == g["key"])
         lines = [f"--- Your Glyphs vs {s_label} ---"]
@@ -159,18 +159,18 @@ class VariantKerningUI:
         if is_s_punc:
             punc_chars = self.get_filtered_chars(font, s_key)
             _, wrappers = self._get_flattened_and_wrappers(punc_chars)
-            for w_l, w_r in wrappers:
-                wl_f = self._handle_slash_punc(w_l)
-                wr_f = self._handle_slash_punc(w_r)
-                line = " ".join(f"{wl_f}{self._format_glyph_name(v)}{wr_f}" for v in variant_glyphs)
-                lines.append(line)
+            for v in variant_glyphs:
+                v_f = self._format_glyph_name(v)
+                pairs = [f"{self._handle_slash_punc(w_l)}{v_f}{self._handle_slash_punc(w_r)}" for w_l, w_r in wrappers]
+                for i in range(0, len(pairs), chunk_size):
+                    lines.append(" ".join(pairs[i:i + chunk_size]))
         else:
             s_chars = self.get_filtered_chars(font, s_key)
             l_ctrl = DATA[s_key]["l_ctrl"]
             r_ctrl = DATA[s_key]["r_ctrl"]
             for v in variant_glyphs:
                 v_f = self._format_glyph_name(v)
-                line = " ".join(f"{l_ctrl}{v_f}{s}{r_ctrl}" for s in s_chars)
+                line = " ".join(f"{l_ctrl}{v_f}{s}{v_f}{r_ctrl}" for s in s_chars)
                 lines.append(line)
 
         font.newTab("\n\n".join(lines))
